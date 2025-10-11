@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { SignInButton } from '@clerk/nextjs'
 import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import path from 'path'
@@ -29,7 +30,9 @@ const Header = () => {
         </div>
 
         <div>
-          <Button>Get Started <ArrowRight/> </Button>
+          <SignInButton mode='modal' forceRedirectUrl={'/workspace'}>
+            <Button>Get Started <ArrowRight/> </Button>
+          </SignInButton>
         </div>
 
 
