@@ -4,6 +4,7 @@ import "./globals.css";
 
 import {ClerkProvider} from '@clerk/nextjs'
 import  Provider  from "./Provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -25,6 +26,7 @@ export default function RootLayout({
       >
         <Provider>
           {children}
+          <Toaster/>
         </Provider>
         
       </body>
