@@ -7,6 +7,7 @@ import WebsiteDesign from '../_components/WebsiteDesign'
 import ElementSettingSection from '../_components/ElementSettingSection'
 import { useParams, useSearchParams } from 'next/navigation'
 import axios from 'axios'
+import { toast } from 'sonner'
 
 export type Frame={
   projectId:string;
@@ -79,9 +80,18 @@ function PlayGround() {
       const result = await axios.get('/api/frames?frameId='+frameId+"&projectId="+projectId);
       console.log(result.data);
       setFrameDetail(result.data);
+
+      const designCode=result.data?.designCode;
+      const index=designCode.indexOf('```html')+7;
+      const formatedCode=designCode.slice(index);
+      setGeneratedCode(formatedCode);
+
+
       if(result.data?.chatMessages?.length==1){
           const userMsg=result.data?.chatMessages[0].content;
           SendMessage(userMsg);
+        }else{
+          setMessages(result.data?.chatMessages);
         }
     }
 
@@ -121,6 +131,8 @@ function PlayGround() {
       }
     }
 
+    await SaveGeneratedCode(aiResponse);
+
     if(!isCode) {
           setMessages((prev: any) => [
             ...prev,
@@ -137,9 +149,30 @@ function PlayGround() {
   }
 
   useEffect(()=>{
-    console.log(generatedCode);
-  },[generatedCode])
+    if(messages.length>0){
+      SaveMessages();
+    }
+  },[messages])
     
+  const SaveMessages=async()=>{
+    const result = await axios.put('/api/chats',{
+      messages:messages,
+      frameId:frameId
+    });
+    console.log(result)
+  }
+
+
+  const SaveGeneratedCode=async(code:string)=>{
+    const result = await axios.put('/api/frames',{
+      designCode:code,
+      frameId:frameId,
+      projectId:projectId
+    });
+    console.log(result.data)
+    toast.success('Website is Ready!')
+  }
+
   return (
     <div>
         <PlaygroundHeader />
@@ -150,7 +183,7 @@ function PlayGround() {
             onSend={(input:string)=>SendMessage(input)} 
             loading={loading}/>
 
-            <WebsiteDesign />
+            <WebsiteDesign generatedCode={generatedCode?.replace('```','')}/>
 
             {/* <ElementSettingSection /> */}
 
