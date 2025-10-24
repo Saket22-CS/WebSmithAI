@@ -106,7 +106,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
                 </div>
 
                 <div>
-                    <label className='text-sm block'>Text Color</label>
+                    <label htmlFor="text-color-picker" className='text-sm block'>Text Color</label>
                     <input type='color'
                         aria-label="Enter class name"
                         className='w-[40px] h-[40px] rounded-lg mt-1'
@@ -140,50 +140,54 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
             {/* Background Color + Border Radius inline */}
             <div className="flex items-center gap-4">
                 <div>
-                    <label className='text-sm block'>Background</label>
+                    <label htmlFor="bg-color-picker" className='text-sm block'>Background</label>
                     <input type='color'
                         className='w-[40px] h-[40px] rounded-lg mt-1'
+                        aria-label="Select background color"
                         defaultValue={selectedEl?.style?.backgroundColor || '#ffffff'}
                         onChange={(event) => applyStyle('backgroundColor', event.target.value)}
                     />
                 </div>
                 <div className="flex-1">
-                    <label className='text-sm'>Border Radius</label>
+                    <label htmlFor="border-radius-input" className='text-sm'>Border Radius</label>
                     <Input type='text'
                         placeholder='e.g. 8px'
                         defaultValue={selectedEl?.style?.borderRadius || ''}
                         onChange={(e) => applyStyle('borderRadius', e.target.value)}
                         className='mt-1'
+                        aria-label="Enter border radius"
                     />
                 </div>
             </div>
 
             {/* Padding */}
             <div>
-                <label className='text-sm'>Padding</label>
+                <label htmlFor="padding-input" className='text-sm'>Padding</label>
                 <Input type='text'
                     placeholder='e.g. 10px 15px'
                     defaultValue={selectedEl?.style?.padding || ''}
                     onChange={(e) => applyStyle('padding', e.target.value)}
                     className='mt-1'
+                    aria-label="Enter padding"
                 />
             </div>
 
             {/* Margin */}
             <div>
-                <label className='text-sm'>Margin</label>
+                <label htmlFor="margin-input" className='text-sm'>Margin</label>
                 <Input type='text'
                     placeholder='e.g. 10px 15px'
                     defaultValue={selectedEl?.style?.margin || ''}
                     onChange={(e) => applyStyle('margin', e.target.value)}
                     className='mt-1'
+                    aria-label="Enter margin"
                 />
             </div>
 
             {/* === Class Manager === */}
 
             <div>
-                <label className="text-sm font-medium">Classes</label>
+                <label htmlFor="add-class-input" className="text-sm font-medium">Classes</label>
 
                 {/* Existing classes as removable chips */}
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -213,6 +217,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
                         value={newClass}
                         onChange={(e) => setNewClass(e.target.value)}
                         placeholder="Add class..."
+                        aria-label="Add a new class"
                     />
                     <Button type="button" onClick={addClass}>
                         Add
