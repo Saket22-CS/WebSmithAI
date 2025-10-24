@@ -1,14 +1,14 @@
 "use client"
 
 import { Button } from '@/components/ui/button'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import {ArrowUp, ImagePlus, LayoutDashboard, Key , HomeIcon, User, Loader2Icon} from 'lucide-react'
-import { SignInButton, useUser } from '@clerk/nextjs'
+import { SignInButton, useAuth, useUser } from '@clerk/nextjs'
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { set } from 'date-fns'
+import { UserDetailContext } from '@/context/UserDetailContext'
 
 const Suggestions = [
   {
@@ -34,14 +34,24 @@ const Suggestions = [
 ];
 
 
-const Hero = () => {
+function Hero(){
 
     const [userInput, setUserInput] = useState<string>('');
     const {user} = useUser();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const {has} = useAuth();
+    const {userDetail, setUserDetail} = useContext<any>(UserDetailContext);
+
+    const hasUnlimitedAccess = has&&has({ plan: 'unlimited' })
 
     const CreateNewProject = async() =>{
+
+      if(!hasUnlimitedAccess && userDetail?.credits! <=0){
+        toast.error('You have no credits left. Please upgrade your plan.');
+        return;
+      }
+
       setLoading(true);
       const projectId = uuidv4();
       const frameId = generateRamdomFrameNumber();
@@ -56,13 +66,17 @@ const Hero = () => {
         const result = await axios.post('/api/projects',{
           projectId: projectId,
           frameId: frameId,
-          messages: messages
+          messages: messages,
+          credits: userDetail?.credits
         });
         console.log(result.data);
         toast.success('Project created successfully');
 
         router.push(`/playground/${projectId}?frameId=${frameId}`);
-        setLoading(false);
+        setUserDetail((prev:any)=>({
+          ...prev,
+          credits: prev?.credits! -1}));
+          setLoading(false);
       } catch (error) {
         toast.error('Something went wrong');
         console.log(error);  
