@@ -195,7 +195,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
                         classes.map((cls) => (
                             <span
                                 key={cls}
-                                className="flex text-xs items-center gap-1 px-2 py-1 text-sm rounded-full bg-gray-100 border"
+                                className="flex text-sm items-center gap-1 px-2 py-1 rounded-full bg-gray-100 border"
                             >
                                 {cls}
                                 <button

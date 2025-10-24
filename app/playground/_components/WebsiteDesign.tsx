@@ -190,6 +190,7 @@ const HTML_CODE=`<!DOCTYPE html>
                 <iframe
                 ref={iframeRef}
                 className={`${selectedScreenSize === 'web' ? 'w-full' : 'w-120'} h-[630px] border-2 rounded-xl`}
+                aria-label="Website design preview"
                 sandbox="allow-scripts allow-same-origin"
                 />
                 <WebPageTools
