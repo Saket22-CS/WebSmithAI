@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
 import ElementSettingSection from './ElementSettingSection';
+import ImageSettingSection from './ImageSettingSection';
 
 type Props={
   generatedCode:string
@@ -154,12 +155,20 @@ const HTML_CODE=`<!DOCTYPE html>
                 generatedCode={generatedCode}
                 />
             </div>
-            <ElementSettingSection
-                selectedEl={selectedElement!}
-                clearSelection={() => setSelectedElement(null)}
-            />
+
+            {/* <ElementSettingSection selectedEl={selectedElement!}clearSelection={() => setSelectedElement(null)}/> */}
+            
+            {selectedElement?.tagName === 'IMG' ? (
+                //@ts-ignore
+                <ImageSettingSection selectedEl={selectedElement} />
+            ) : selectedElement ? (
+                <ElementSettingSection 
+                    selectedEl={selectedElement}
+                    clearSelection={() => setSelectedElement(null)}
+                />
+            ) : null}
             </div>
-        )
+        );
         }
 
         export default WebsiteDesign
