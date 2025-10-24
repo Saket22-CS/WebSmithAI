@@ -196,7 +196,6 @@ const GetFrameDetails = async () => {
 
             <WebsiteDesign generatedCode={generatedCode?.replace('```','')}/>
 
-            {/* <ElementSettingSection /> */}
 
         </div>
     </div>

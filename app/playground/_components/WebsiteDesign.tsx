@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
+import ElementSettingSection from './ElementSettingSection';
 
 type Props={
   generatedCode:string
@@ -33,121 +34,132 @@ const HTML_CODE=`<!DOCTYPE html>
       </body>
       </html>`
 
-    function WebsiteDesign({ generatedCode }: Props) {
-        const iframeRef = useRef<HTMLIFrameElement>(null);
-        const [selectedScreenSize,setSelectedScreenSize]=useState('web');
+        function WebsiteDesign({ generatedCode }: Props) {
+        const iframeRef = useRef<HTMLIFrameElement>(null)
+        const [selectedScreenSize, setSelectedScreenSize] = useState('web')
+        const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null)
 
-        // Initialize iframe shell once
-    useEffect(() => {
-        if (!iframeRef.current) return;
-        const doc = iframeRef.current.contentDocument;
-        if (!doc) return;
+        // 1️⃣ Initialize iframe base document
+        useEffect(() => {
+            if (!iframeRef.current) return
+            const doc = iframeRef.current.contentDocument
+            if (!doc) return
+            doc.open()
+            doc.write(HTML_CODE)
+            doc.close()
+        }, [])
 
-        doc.open();
-        doc.write(HTML_CODE);
-        doc.close();
+        // 2️⃣ Function to attach selection events
+        const attachSelectionHandlers = (doc: Document) => {
+            let hoverEl: HTMLElement | null = null
+            let selectedElements: HTMLElement[] = []
 
-        let hoverEl: HTMLElement | null = null;
-        let selectedEl: HTMLElement | null = null;
-
-
-
-        const handleMouseOver = (e: MouseEvent) => {
-            if (selectedEl) return;
-            const target = e.target as HTMLElement;
-            if (hoverEl && hoverEl !== target) {
-                hoverEl.style.outline = "";
+            const handleMouseOver = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            if (hoverEl && hoverEl !== target && !selectedElements.includes(hoverEl)) {
+                hoverEl.style.outline = ""
             }
-            hoverEl = target;
-            hoverEl.style.outline = "2px dotted blue";
-        };
-
-        const handleMouseOut = (e: MouseEvent) => {
-            if (selectedEl) return;
-            if (hoverEl) {
-                hoverEl.style.outline = "";
-                hoverEl = null;
+            hoverEl = target
+            if (!selectedElements.includes(target)) {
+                hoverEl.style.outline = "2px dotted blue"
             }
-        };
-
-        const handleClick = (e: MouseEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const target = e.target as HTMLElement;
-
-            if (selectedEl && selectedEl !== target) {
-                selectedEl.style.outline = "";
-                selectedEl.removeAttribute("contenteditable");
             }
 
-            selectedEl = target;
-            selectedEl.style.outline = "2px solid red";
-            selectedEl.setAttribute("contenteditable", "true");
-            selectedEl.focus();
-            console.log("Selected element:", selectedEl);
-
-        };
-
-        const handleBlur = () => {
-            if (selectedEl) {
-                console.log("Final edited element:", selectedEl.outerHTML);
+            const handleMouseOut = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            if (hoverEl === target && !selectedElements.includes(target)) {
+                hoverEl.style.outline = ""
+                hoverEl = null
             }
-        };
-
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && selectedEl) {
-                selectedEl.style.outline = "";
-                selectedEl.removeAttribute("contenteditable");
-                selectedEl.removeEventListener("blur", handleBlur);
-                selectedEl = null;
             }
-        };
 
-        doc.body?.addEventListener("mouseover", handleMouseOver);
-        doc.body?.addEventListener("mouseout", handleMouseOut);
-        doc.body?.addEventListener("click", handleClick);
-        doc?.addEventListener("keydown", handleKeyDown);
+            const handleClick = (e: MouseEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            const target = e.target as HTMLElement
 
-        // Cleanup on unmount
-        return () => {
-            doc.body?.removeEventListener("mouseover", handleMouseOver);
-            doc.body?.removeEventListener("mouseout", handleMouseOut);
-            doc.body?.removeEventListener("click", handleClick);
-            doc?.removeEventListener("keydown", handleKeyDown);
-        };
-    }, []);
+            // Shift + click → multi-select
+            if (e.shiftKey) {
+                if (!selectedElements.includes(target)) {
+                target.style.outline = "2px solid green"
+                target.setAttribute("contenteditable", "true")
+                selectedElements.push(target)
+                } else {
+                target.style.outline = ""
+                target.removeAttribute("contenteditable")
+                selectedElements = selectedElements.filter(el => el !== target)
+                }
+            } else {
+                // Normal click → single select
+                selectedElements.forEach(el => {
+                el.style.outline = ""
+                el.removeAttribute("contenteditable")
+                })
+                selectedElements = []
+                target.style.outline = "2px solid red"
+                target.setAttribute("contenteditable", "true")
+                target.focus()
+                selectedElements.push(target)
+            }
 
+            setSelectedElement(selectedElements[0] || null)
+            }
 
-    // Update body only when code changes
-    useEffect(() => {
-        if (!iframeRef.current) return;
-        const doc = iframeRef.current.contentDocument;
-        if (!doc) return;
+            const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && selectedElements.length > 0) {
+                selectedElements.forEach(el => {
+                el.style.outline = ""
+                el.removeAttribute("contenteditable")
+                })
+                selectedElements = []
+                setSelectedElement(null)
+            }
+            }
 
-        const root = doc.getElementById("root");
-        if (root) {
-            root.innerHTML =
-                generatedCode
-                    ?.replaceAll("```html", "")
-                    .replaceAll("```", "")
-                    .replace("html", "") ?? "";
+            // ✅ Attach listeners to body after content is updated
+            doc.body.addEventListener("mouseover", handleMouseOver)
+            doc.body.addEventListener("mouseout", handleMouseOut)
+            doc.body.addEventListener("click", handleClick)
+            doc.addEventListener("keydown", handleKeyDown)
         }
-    }, [generatedCode]);
 
-    return (
-      <div className='p-5 w-full flex items-center flex-col'>
-        <iframe
-            ref={iframeRef}
-            className={`${selectedScreenSize=='web'? 'w-full':'w-120' } h-[630px] border-2 rounded-xl`}
-            sandbox="allow-scripts allow-same-origin"
-        />
-        <WebPageTools selectedScreenSize={selectedScreenSize}
-        setSelectedScreenSize={(v:string)=>setSelectedScreenSize(v)}
-        generatedCode={generatedCode}
-        />
-      </div>
-    );
-}
+        // 3️⃣ Update iframe content and attach handlers after generatedCode changes
+        useEffect(() => {
+            if (!iframeRef.current) return
+            const doc = iframeRef.current.contentDocument
+            if (!doc) return
+            const root = doc.getElementById("root")
+            if (!root) return
 
-export default WebsiteDesign
+            root.innerHTML = generatedCode
+            ?.replaceAll("```html", "")
+            .replaceAll("```", "")
+            .replace("html", "") ?? ""
+
+            // Attach selection logic after HTML updates
+            attachSelectionHandlers(doc)
+        }, [generatedCode])
+
+        return (
+            <div className='flex gap-2 w-full'>
+            <div className='p-2 w-full flex items-center flex-col'>
+                <iframe
+                ref={iframeRef}
+                className={`${selectedScreenSize === 'web' ? 'w-full' : 'w-120'} h-[630px] border-2 rounded-xl`}
+                sandbox="allow-scripts allow-same-origin"
+                />
+                <WebPageTools
+                selectedScreenSize={selectedScreenSize}
+                setSelectedScreenSize={(v: string) => setSelectedScreenSize(v)}
+                generatedCode={generatedCode}
+                />
+            </div>
+            <ElementSettingSection
+                selectedEl={selectedElement!}
+                clearSelection={() => setSelectedElement(null)}
+            />
+            </div>
+        )
+        }
+
+        export default WebsiteDesign
