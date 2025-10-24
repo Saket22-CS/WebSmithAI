@@ -1,7 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
 import ElementSettingSection from './ElementSettingSection';
 import ImageSettingSection from './ImageSettingSection';
+import { OnSaveContext } from '@/context/OnSaveContext';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { useParams, useSearchParams } from 'next/navigation';
 
 type Props={
   generatedCode:string
@@ -39,7 +43,10 @@ const HTML_CODE=`<!DOCTYPE html>
         const iframeRef = useRef<HTMLIFrameElement>(null)
         const [selectedScreenSize, setSelectedScreenSize] = useState('web')
         const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null)
-
+        const {onSaveData,setOnSaveData} = useContext(OnSaveContext)
+        const {projectId} = useParams();
+        const params = useSearchParams();
+        const frameId = params.get('frameId');
         // 1️⃣ Initialize iframe base document
         useEffect(() => {
             if (!iframeRef.current) return
@@ -140,6 +147,42 @@ const HTML_CODE=`<!DOCTYPE html>
             // Attach selection logic after HTML updates
             attachSelectionHandlers(doc)
         }, [generatedCode])
+
+        useEffect(()=>{
+            onSaveData&&onSaveCode();
+        },[onSaveData]);
+
+        const onSaveCode=async()=>{
+            if (iframeRef.current) {
+                try {
+                    const iframeDoc =
+                        iframeRef.current.contentDocument ||
+                        iframeRef.current.contentWindow?.document;
+
+                    if (iframeDoc) {
+                        const cloneDoc = iframeDoc.documentElement.cloneNode(true) as HTMLElement;
+                        const AllEls = cloneDoc.querySelectorAll<HTMLElement>("*");
+                        AllEls.forEach((el) => {
+                            el.style.outline = "";
+                            el.style.cursor = "";
+                        });
+                        const html = cloneDoc.outerHTML;
+                        console.log("Saved HTML:", html);
+
+                        const result = await axios.put('/api/frames',{
+                            designCode:html,
+                            frameId:frameId,
+                            projectId:projectId
+                            });
+                            console.log(result.data)
+                            toast.success('Saved!')
+                    }
+                } catch (error) {
+                    console.log("Error saving code:", error);
+                }
+            }
+
+        }
 
         return (
             <div className='flex gap-2 w-full'>

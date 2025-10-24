@@ -5,6 +5,7 @@ import axios from 'axios'
 import { useUser } from '@clerk/nextjs';
 import { User } from 'lucide-react';
 import { UserDetailContext } from '@/context/UserDetailContext';
+import { OnSaveContext } from '@/context/OnSaveContext';
 
 function Provider({
   children,
@@ -14,6 +15,7 @@ function Provider({
 
     const{user}=useUser();
     const [userDetail,setUserDetail] = useState<any>();
+    const [onSaveData,setOnSaveData] = useState<any>(null);
     useEffect(() => {
         user && CreateNewUser();
     }, [user]);
@@ -29,7 +31,9 @@ function Provider({
   return (
         <div>
             <UserDetailContext.Provider value={{userDetail,setUserDetail}}>
+                <OnSaveContext.Provider value={{onSaveData,setOnSaveData}}>
                 {children}
+                </OnSaveContext.Provider>
             </UserDetailContext.Provider>
         </div>
   )
