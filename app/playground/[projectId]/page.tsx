@@ -69,31 +69,42 @@ function PlayGround() {
     const [frameDetail,setFrameDetail] = useState<Frame>();
     const [loading,setLoading] = useState(false);
     const [messages, setMessages] = useState<Messages[]>([])
-    const [generatedCode,setGeneratedCode] = useState<any>();
+    const [generatedCode,setGeneratedCode] = useState<string>('');
 
     useEffect(()=>{
        frameId && GetFrameDetails();
     },[frameId])
     
 
-    const GetFrameDetails=async()=>{
-      const result = await axios.get('/api/frames?frameId='+frameId+"&projectId="+projectId);
-      console.log(result.data);
-      setFrameDetail(result.data);
+const GetFrameDetails = async () => {
+  try {
+    const result = await axios.get(`/api/frames?frameId=${frameId}&projectId=${projectId}`);
+    console.log(result.data);
+    setFrameDetail(result.data);
 
-      const designCode=result.data?.designCode;
-      const index=designCode.indexOf('```html')+7;
-      const formatedCode=designCode.slice(index);
-      setGeneratedCode(formatedCode);
+    const designCode = result.data?.designCode;
 
-
-      if(result.data?.chatMessages?.length==1){
-          const userMsg=result.data?.chatMessages[0].content;
-          SendMessage(userMsg);
-        }else{
-          setMessages(result.data?.chatMessages);
-        }
+    // ✅ Only format code if it actually exists
+    if (designCode && typeof designCode === "string" && designCode.includes("```html")) {
+      const index = designCode.indexOf("```html") + 7;
+      const formattedCode = designCode.slice(index);
+      setGeneratedCode(formattedCode);
+    } else if (designCode) {
+      // Fallback — if code exists but no markdown formatting
+      setGeneratedCode(designCode);
     }
+
+    if (result.data?.chatMessages?.length === 1) {
+      const userMsg = result.data.chatMessages[0].content;
+      SendMessage(userMsg);
+    } else {
+      setMessages(result.data?.chatMessages || []);
+    }
+  } catch (error) {
+    console.error("Error fetching frame details:", error);
+  }
+};
+
 
     const SendMessage=async(userInput:string)=>{
       setLoading(true);
